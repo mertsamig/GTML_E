@@ -1,17 +1,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Untitled -- Nozzle_Untitled.m
-% written by Yang Shubo
-% Aeroengine Control Library, Beihang University
-% April 27th, 2015
-
+% GTML-E -- Nozzle
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.1
+%
 % to be continued : CD nozzle & calculate gamma by Ts
-% version 1.1
 %
 % Msg:  0 or -A, 0 means ok, -A means warnning
 %       A: pressure of input, 1 : too small, 2 : too large
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ WOut, FgOut, NErrorOut, OthrData, Msg ] = Nozzle_Untitled( GasPthCharIn, PambIn, AthroatIn, Cdth, CV, CX )
+function [ WOut, FgOut, NErrorOut, OthrData, Msg ] = Nozzle( GasPthCharIn, PambIn, AthroatIn, Cdth, CV, CX )
 
 Msg = 0;
 

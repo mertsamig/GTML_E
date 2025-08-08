@@ -1,10 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) 2014-2018
-% written by Yang Shubo
-% December 14th, 2018
-% revised by Long Yifu
-% April 16th, 2021
-% version: 1.2
+% GTML-E -- T_H
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.2
+%
 % Describe:
 % 	Give entHalpy 'H(J/kg)',
 %       fuel air ratio 'FAR(-)',
@@ -36,27 +37,25 @@ elseif H > maxH
     H = maxH;
 end
 
-H_guess = H_T( T_real, FAR, flag );
+% Define the error function for the solver
+error_fun = @(T) H_T(T, FAR, flag) - H;
 
-for iter_flag = 1 : 10
+% Set options for lsqnonlin, requires Optimization Toolbox
+options = optimoptions('lsqnonlin', 'Display', 'off');
 
-    t_guess_plus=T_real*1.0001;
-    H_guess_plus=H_T(t_guess_plus, FAR, flag);
-    t_guess_minus=T_real*0.9999;
-    H_guess_minus=H_T(t_guess_minus, FAR, flag);
-       
-    df_dt=((H_guess_plus-H)-(H_guess_minus-H))/(T_real*0.0002);
-    T_real=T_real-((H_guess-H)/df_dt);
-    if T_real < 200
-        T_real = 200;
-    elseif T_real > 3000
-        T_real = 3000;
-    end
-    H_guess = H_T( T_real, FAR, flag );
-    
-    if (abs(H_guess-H)<=1e-4)
-        break;
-    end
+% Set bounds
+T_min = 200;
+T_max = 3000;
+
+% Call the solver
+[T_real, ~, ~, exitflag] = lsqnonlin(error_fun, T_guess, T_min, T_max, options);
+
+% Basic check for solver success
+if exitflag <= 0
+    % Handle solver failure if necessary, for now, it will just return the last value
+    iter_flag = -1;
+else
+    iter_flag = 1; % Placeholder for success
 end
 
 end

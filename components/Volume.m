@@ -1,11 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) 2014-2015
-% Athor: Yang Shubo
-% Date: 2014/09/07
+% GTML-E -- Volume
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
 % Version: 1.0
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [dPt, dTt] = Volume_Untitled( Tt_in, W_in, Wf, Pt_state, Tt_state, W_out, volume )
+function [dPt, dTt] = Volume( Tt_in, W_in, Wf, Pt_state, Tt_state, W_out, volume )
 
 %T:K
 %W:kg/s

@@ -1,8 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) 2014-2018
-% written by Long Yifu
-% April 15th, 2021
-% version: 1.1
+% GTML-E -- psi_T
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.1
+%
 % T[200K~2200K]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

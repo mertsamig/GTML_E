@@ -1,17 +1,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GTML-E -- Compressor
-% written by Yang Shubo
-% Aeroengine Control Library, Beihang University
-% March 27th, 2015
-% revised by Yang Shubo
-% July 2th, 2019
-% version 1.02
-
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.02
+%
 % MaxNum of bleeds : 10
 % to be continued : map scale & error count & stall margin
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ GasPthCharOut, PwrOut, NErrorOut, OthrData, CustBldsCharOut, FBldsCharOut, Msg ] = Compressor_Untitled( GasPthCharIn, Nmech, beta, VSV, CustBldsPlan, FBldsPlan, Nc_tab, Beta_tab, Eff_tab, PR_tab, Wc_tab, SF, CNST, WcSurgeVec, PRSurgeVec )
+function [ GasPthCharOut, PwrOut, NErrorOut, OthrData, CustBldsCharOut, FBldsCharOut, Msg ] = Compressor( GasPthCharIn, Nmech, beta, VSV, CustBldsPlan, FBldsPlan, Nc_tab, Beta_tab, Eff_tab, PR_tab, Wc_tab, SF, CNST, WcSurgeVec, PRSurgeVec )
 
 WIn = 0;
 TtIn = 0;

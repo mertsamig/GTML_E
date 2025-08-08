@@ -1,8 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) 2014-2018
-% Athor: Yang Shubo & Long Yifu
-% Date: 2018/12/14
+% GTML-E -- Interpolation
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
 % Version: 1.1
+%
 % Describe:
 % 	Give an increasing vector 'x(n)' and vector 'v(n)' and 'xi' 
 % return 1-D interp result 'vi'

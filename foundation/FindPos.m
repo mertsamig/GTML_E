@@ -1,8 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) 2014-2018
-% Athor: Yang Shubo
-% Date: 2018/12/14
+% GTML-E -- FindPos
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
 % Version: 1.0
+%
 % Describe:
 % 	Give an increasing vector 'x(n)' and 'xi' 
 % return last position 'il' where 'x(il) <= xi'

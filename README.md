@@ -1,36 +1,100 @@
 # GTML-E: Gas Turbine Modeling Library for Education
 
-**Author:** [Shubo Yang](https://www.researchgate.net/profile/Shubo_Yang)
-
-**Contributors:** Keqiang Miao, Yifu Long
-
-**Keywords:** Gas Turbine, Open Source, Simulation, Modeling, MATLAB, Simulink.
-
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.13324442.svg)](https://doi.org/10.5281/zenodo.13324442)
 
 ## What is GTML-E?
 
-The Gas Turbine Modeling Library for Education (GTML-E) is an open source library intended for teaching the modeling and simulation of gas turbines. 
+The Gas Turbine Modeling Library for Education (GTML-E) is an open-source library for MATLAB and Simulink, designed for teaching and learning the principles of gas turbine engine modeling and simulation. It provides a set of pre-built Simulink blocks that represent various components of a gas turbine, allowing users to construct and simulate different engine models.
 
-Development of the MATLAB/Simulink library was initiated on behalf of Tsinghua University to helps a student to learn how to create gas turbine models and related simulations.   
+Development of this library was initiated on behalf of Tsinghua University to help students learn how to create gas turbine models and related control systems.
 
-## Getting Started 
+## Getting Started
 
-Stable releases of GTML-E are located under the <a href= "https://github.com/xjysb/GTML_E/releases" >releases tab</a>.
-Note that GTML-E was developed in MATLAB/Simulink R2014a (The Mathworks, Inc.) and it is not guaranteed to work on earlier Matlab versions.
+### Prerequisites
 
-To install GTML-E in the Simulink Library Browser, simply add all folders and subfolders to the Matlab path using the set path option. 
+*   **MATLAB R2014a** or newer.
+*   **Simulink**
+*   **MATLAB Optimization Toolbox** (required for `lsqnonlin` solver)
+
+### Installation
+
+To use the GTML-E library, you must add its folders to your MATLAB path. This allows Simulink to find the library and its component blocks.
+
+**Option 1: Temporary Setup (for the current session)**
+
+Run the following command in the MATLAB Command Window, replacing `/path/to/GTML_E` with the actual path to the repository on your computer:
+
+```matlab
+addpath(genpath('/path/to/GTML_E'));
+```
+
+**Option 2: Permanent Setup (Recommended)**
+
+For a more permanent setup, you can use MATLAB's `pathtool` or a startup script.
+
+1.  **Using `pathtool`:**
+    *   Type `pathtool` in the MATLAB Command Window.
+    *   In the Pathtool window, click "Add with Subfolders...".
+    *   Navigate to and select the root directory of the GTML-E repository.
+    *   Click "Save" to save the changes for future MATLAB sessions.
+
+2.  **Using a `startup.m` script:**
+    *   Find or create a file named `startup.m` in your default MATLAB user path (you can find this path by typing `userpath` in the command window).
+    *   Add the following line to the file, replacing the path as needed:
+        ```matlab
+        addpath(genpath('/path/to/GTML_E'));
+        ```
+    *   Save the file. This command will now run automatically every time you start MATLAB.
+
+### Verifying the Installation
+
+1.  Open Simulink by typing `simulink` in the MATLAB Command Window.
+2.  Create a new, blank model.
+3.  Open the **Simulink Library Browser**.
+4.  You should see **"GTMLE_Library"** in the list of available libraries on the left. If you see it, the installation was successful.
+
+## Usage Tutorial: Building a Simple Turbojet
+
+This tutorial will guide you through the basic steps of creating a simple turbojet model.
+
+1.  **Create a New Model:** With Simulink open, create a new blank model (`File > New > Model`).
+
+2.  **Open the Library:** Open the Simulink Library Browser and navigate to the **GTMLE_Library**.
+
+3.  **Add Components:** Drag the following blocks from the library into your model:
+    *   `Compressor`
+    *   `Burner`
+    *   `Turbine`
+    *   `Nozzle`
+
+4.  **Connect the Gas Path:** The primary data connection between these blocks is the "Gas Path Characteristics" port. This is a vector that carries the properties of the gas (flow rate, enthalpy, temperature, pressure, and fuel-air ratio). Connect the blocks in order:
+    *   Connect the `GasPthCharOut` of the **Compressor** to the `GasPthCharIn` of the **Burner**.
+    *   Connect the `GasPthCharOut` of the **Burner** to the `GasPthCharIn` of the **Turbine**.
+    *   Connect the `GasPthCharOut` of the **Turbine** to the `GasPthCharIn` of the **Nozzle**.
+
+5.  **Provide Inputs:** To run a simulation, you would need to provide inputs to these blocks, such as:
+    *   **Component Maps:** The `Compressor` and `Turbine` require performance maps (tables of flow, pressure ratio, and efficiency vs. speed). These are provided as inputs to the blocks.
+    *   **Control Signals:** You need to provide signals for mechanical speed (`Nmech`), fuel flow (`Wfin`), and nozzle area (`AthroatIn`).
+    *   **Solver Loop:** For a complete model, you need to create a solver that enforces physical constraints, such as ensuring the power generated by the turbine equals the power consumed by the compressor (`PwrOut` from Turbine matches `PwrIn` from Compressor).
+
+> **Note:** This tutorial covers the basic assembly. A full, runnable simulation requires defining the input data and implementing a solver, which is beyond the scope of this quickstart guide.
+
+## Component Overview
+
+The library contains the following components:
+
+*   **Compressor:** Models a compressor component using performance maps.
+*   **Turbine:** Models a turbine component, including cooling flows, using performance maps.
+*   **Burner:** Models the combustion chamber, calculating fuel addition and pressure loss.
+*   **Nozzle:** Models the exhaust nozzle, calculating gross thrust.
+*   **Duct:** Models a duct or pipe, accounting for pressure losses.
+*   **Mixer:** Models the mixing of two separate gas streams.
+*   **Volume:** Models inter-component volume dynamics, which is important for creating high-fidelity transient simulations.
 
 ## Citation
 
-If used in published work, please cite the work as:
-
-Shubo Yang. (2024, August 15). GTML-E: Gas Turbine Modeling Library for Education (Version v1.3.6). *Zenodo*. [http://dx.doi.org/10.5281/zenodo.13324442](http://dx.doi.org/10.5281/zenodo.13324442)
-
-In addition, please cite the technical report acknowledged below.
+If you use this software in published work, please cite it using the DOI link above.
 
 ## Acknowledgements
-The Iterative Newton Raphson Solver block used in GTML-E is based on [T-MATS package](https://github.com/nasa/T-MATS) and the corresponding report [Toolbox for the Modeling and Analysis of Thermodynamic Systems (T-MATS) User's Guide](https://www.researchgate.net/publication/273755877_Toolbox_for_the_Modeling_and_Analysis_of_Thermodynamic_Systems_T-MATS_User's_Guide/citations) by [Chapman, Jeffryes W.](https://www.grc.nasa.gov/www/cdtb/personnel/jeffchapman.html), et al.
 
-<!--Bug report:
- SM changes unsmoothly, which dues to W changing too fast. We should introduce a Volume between Booster and Compressor.+ W - P_err-->
+The iterative solver components used in GTML-E are based on the [T-MATS package](https://github.com/nasa/T-MATS) and the corresponding report "Toolbox for the Modeling and Analysis of Thermodynamic Systems (T-MATS) User's Guide" by Chapman, Jeffryes W., et al.

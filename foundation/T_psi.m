@@ -1,8 +1,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) 2014-2018
-% written by Long Yifu
-% April 15th, 2021
-% version: 1.1
+% GTML-E -- T_psi
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [t_guess, i] = T_psi(psi, f, t_guess, flag)
@@ -31,26 +33,25 @@ elseif psi > maxpsi
 end
 
 
-psi_guess= psi_T( t_guess, f, flag );
+% Define the error function for the solver
+error_fun = @(t) psi_T(t, f, flag) - psi;
 
-for i=1:10
-    t_guess_plus=t_guess*1.0001;
-    psi_guess_plus=psi_T(t_guess_plus,f,flag);
-    t_guess_minus=t_guess*0.9999; 
-    psi_guess_minus=psi_T(t_guess_minus,f,flag);
+% Set options for lsqnonlin, requires Optimization Toolbox
+options = optimoptions('lsqnonlin', 'Display', 'off');
 
-    df_dt=((psi_guess_plus-psi)-(psi_guess_minus-psi))/(t_guess*0.0002);
-    t_guess=t_guess-((psi_guess-psi)/df_dt);
-    if t_guess < 200
-        t_guess = 200;
-    elseif t_guess > 2200
-        t_guess = 2200;
-    end
-    psi_guess=psi_T(t_guess,f,flag);
+% Set bounds
+T_min = 200;
+T_max = 2200;
 
-    if(abs(psi_guess-psi)<=1e-7)
-        break;
-    end
+% Call the solver
+[t_guess, ~, ~, exitflag] = lsqnonlin(error_fun, t_guess, T_min, T_max, options);
+
+% Basic check for solver success
+if exitflag <= 0
+    % Handle solver failure if necessary
+    i = -1;
+else
+    i = 1; % Placeholder for success
 end
 
 end

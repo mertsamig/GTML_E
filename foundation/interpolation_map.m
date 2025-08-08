@@ -17,14 +17,8 @@ if a<=ax(1)
     a = ax(1);
 end
 
-for i=1:na
-    ih=i;
-    if a<ax(i)
-        break;
-    end
-end
-
-il=ih-1;
+il = FindPos( ax, a );
+ih = il + 1;
 prm=(a-ax(il))/(ax(ih)-ax(il));
 
 cx=pcx(il,:)+prm*(pcx(ih,:)-pcx(il,:));

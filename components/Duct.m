@@ -1,14 +1,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Untitled -- Duct_Untitled.c
-% written by Miao Keqiang
-% Aeroengine Control Library, Beihang University
-% July 2nd, 2015
-
+% GTML-E -- Duct
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.1
+%
 % MaxNum of bleeds : 10
-% version 1.1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ GasPthCharOut, OthrData ] = Duct_Untitled ( GasPthCharIn , CNST, PtIn_des, TtIn_des, WIn_des, sigma_des, Blds )
+function [ GasPthCharOut, OthrData ] = Duct ( GasPthCharIn , CNST, PtIn_des, TtIn_des, WIn_des, sigma_des, Blds )
 
 % f_in = 0;
 % TtIn = 0;

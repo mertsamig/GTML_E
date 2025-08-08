@@ -1,16 +1,16 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GTML-E -- Turbine
-% written by Yang Shubo
-% Aeroengine Control Library, Beihang University
-% April 3rd, 2015
-% revised by Long Yifu
-% April 16th, 2021
-% version 1.03
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.03
+%
 % MaxNum of bleeds : 10
 % to be continued : map scale & error count
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ GasPthCharOut, PwrOut, NErrorOut, OthrData, Msg ] = Turbine_Untitled( CoolingFlwCharIn, GasPthCharIn, Nmech, PRMap, CoolingPlan, Nc_tab, Eff_tab, PR_tab, Wc_tab, SF, CNST, FuelType )
+function [ GasPthCharOut, PwrOut, NErrorOut, OthrData, Msg ] = Turbine( CoolingFlwCharIn, GasPthCharIn, Nmech, PRMap, CoolingPlan, Nc_tab, Eff_tab, PR_tab, Wc_tab, SF, CNST, FuelType )
 
 WIn = 0;
 TtIn = 0;

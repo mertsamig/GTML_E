@@ -1,14 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % GTML-E -- Burner
-% Aeroengine Control Laboratory, Beihang University
-% written by Miao Keqiang
-% July 7th, 2015
-% revised by Long Yifu
-% April 16th, 2021
-% version 1.06
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
+% Version: 1.06
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [ GasPthCharOut, OthrData ] = Burner_Untitled ( GasPthCharIn , CNST, dpbur, LHV, Eff_des, PtIn_des, TtIn_des, WIn_des, TtIn_fuel, Wfin, FuelType, Load_tab, Eff_tab, SF, FixEff, Volume )
+function [ GasPthCharOut, OthrData ] = Burner ( GasPthCharIn , CNST, dpbur, LHV, Eff_des, PtIn_des, TtIn_des, WIn_des, TtIn_fuel, Wfin, FuelType, Load_tab, Eff_tab, SF, FixEff, Volume )
 
 WIn = 0;
 TtIn = 0;

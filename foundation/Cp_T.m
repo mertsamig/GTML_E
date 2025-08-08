@@ -1,8 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (c) 2014-2018
-% Athor: Yang Shubo
-% Date: 2018/12/12
+% GTML-E -- Cp_T
+%
+% Copyright (c) 2014-2021 The GTML-E Contributors
+% See LICENSE for details.
+%
 % Version: 1.1
+%
 % Describe:
 % 	Give temperature 'T(K)[200K~3000K]',
 %       fuel air ratio 'FAR(-)',
@@ -49,10 +52,7 @@ if strcmp(flag, 'Gas')
         fX(4) = -4.747782033e6+4.799919289e4*(T/273.15)^(-1.5)-1.931588954e5*(T/273.15)^(-1.25)+1.460728340e6*(T/273.15)^(-0.75)-4.000075762e6*(T/273.15)^(-0.5)+5.576209858e6*(T/273.15)^(-0.25)+2.570488297e6*(T/273.15)^(0.25)-8.670521019e5*(T/273.15)^(0.5)+1.666429390e5*(T/273.15)^(0.75)-1.396634620e4*(T/273.15);
     end
 
-    for i = 1 : 4
-            
-        Cp = Cp + fX(i) * Xm(i) / kX(i);
-    end
+    Cp = sum( fX .* Xm ./ kX );
 else
 
     tz = T / 1000;
