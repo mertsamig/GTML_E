@@ -60,7 +60,9 @@ if ( FixEff == 1 )
     Eff = Eff_des;
 else
 
-    Eff = Interpolation( Load_tab, Eff_tab, CombLoad_ );
+    % Use MATLAB's built-in interp1 function with the 'makima' method as requested.
+    % This provides a shape-preserving cubic interpolation.
+    Eff = interp1( Load_tab, Eff_tab, CombLoad_, 'makima' );
 end
 Eff = Eff * SF_Eff;
 

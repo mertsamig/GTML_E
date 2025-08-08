@@ -128,14 +128,17 @@ NcMap_ = NcMap / SF_Nc;
 
 PRMap_ = (PRMap - 1) / SF_PR + 1;
 
-% -- Compute Total Flow input --
+% --- Map Interpolation ---
+% Clamp inputs to map boundaries to avoid extrapolation.
+NcMap_clamped = max(min(NcMap_, Nc_tab(end)), Nc_tab(1));
+PRMap_clamped = max(min(PRMap_, PR_tab(end)), PR_tab(1));
 
-WcMap_ = interpolation_map( NcMap_, PRMap_, Nc_tab, PR_tab, Wc_tab );
+% -- Compute Total Flow input --
+WcMap_ = interp2(Nc_tab, PR_tab, Wc_tab, NcMap_clamped, PRMap_clamped, 'makima');
 WcMap = WcMap_ * SF_Wc;
 
 % -- Compute Efficiency --
-
-EffMap_ = interpolation_map( NcMap_, PRMap_, Nc_tab, PR_tab, Eff_tab );
+EffMap_ = interp2(Nc_tab, PR_tab, Eff_tab, NcMap_clamped, PRMap_clamped, 'makima');
 EffMap = EffMap_ * SF_Eff;
 
 % -- Compute pressure output --

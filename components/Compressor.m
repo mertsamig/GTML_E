@@ -59,20 +59,22 @@ Wcin = WIn * sqrt( theta / fai ) / delta;
 NcMap = Nmech / sqrt( theta * fai );
 NcMap_ = NcMap / SF_Nc;
 
+% --- Map Interpolation ---
+% Clamp inputs to map boundaries to avoid extrapolation.
+NcMap_clamped = max(min(NcMap_, Nc_tab(end)), Nc_tab(1));
+beta_clamped = max(min(beta, Beta_tab(end)), Beta_tab(1));
+
 % -- Compute Total Flow input --
-% Adding "WcMap_" : good readability but one more variable
-WcMap = interpolation_map( NcMap_, beta, Nc_tab, Beta_tab, Wc_tab );
+WcMap = interp2(Nc_tab, Beta_tab, Wc_tab, NcMap_clamped, beta_clamped, 'makima');
 WcMap = WcMap + VSV * WcMap * 1e-2;
 WcMap = WcMap * SF_Wc;
 
 % -- Compute Pressure Ratio --
-
-PRMap = interpolation_map( NcMap_, beta, Nc_tab, Beta_tab, PR_tab );
+PRMap = interp2(Nc_tab, Beta_tab, PR_tab, NcMap_clamped, beta_clamped, 'makima');
 PRMap = (PRMap - 1) * SF_PR + 1;
 
 % -- Compute Efficiency --
-
-EffMap = interpolation_map( NcMap_, beta, Nc_tab, Beta_tab, Eff_tab );
+EffMap = interp2(Nc_tab, Beta_tab, Eff_tab, NcMap_clamped, beta_clamped, 'makima');
 EffMap = EffMap - VSV * VSV * 1e-4 * EffMap;
 EffMap = EffMap * SF_Eff;
 
@@ -154,7 +156,8 @@ end
 
 % -- Compute Stall Margin --
 
-SPR = Interpolation( WcSurgeVec, PRSurgeVec, Wcin );
+% Use MATLAB's built-in interp1 function with the 'makima' method as requested.
+SPR = interp1( WcSurgeVec, PRSurgeVec, Wcin, 'makima' );
 SM = ( SPR / PRMap - 1 ) * 100;
 
 % -- Assign output values port --
