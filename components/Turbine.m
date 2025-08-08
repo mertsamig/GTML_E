@@ -36,62 +36,50 @@ else
     MARK = 'Gas';
 end
 
-% -- Load the cooling flow --
+% -- Vectorized Cooling Flow Calculations --
+[ ~, num ] = size(CoolingPlan);
+Wcool = zeros(1, num);
+htcool = zeros(1, num);
 
-[ ~, num ] = size( CoolingPlan );
-Wcool = zeros( 1, num );
-htcool = zeros( 1, num );
-Ttcool = zeros( 1, num );
-Ptcool = zeros( 1, num );
-FARcool = zeros( 1, num );
+[port_num,~] = size(CoolingFlwCharIn);
+if (port_num == 5)
+    % Use logical indexing to find active cooling flows
+    active_cool_flows = CoolingPlan(1, :) > 0;
 
-[port_num,~] = size( CoolingFlwCharIn );
-if ( port_num == 5 )
-    for i = 1 : num
-        if CoolingPlan( 1, i ) > 0
-            Wcool( i ) = CoolingFlwCharIn( 1, i ) * CoolingPlan( 1, i );
-            Ttcool( i ) = CoolingFlwCharIn( 3, i );
-            Ptcool( i ) = CoolingFlwCharIn( 4, i );
-            FARcool( i ) = CoolingFlwCharIn( 5, i );
-            htcool( i ) = H_T( Ttcool( i ), FARcool( i ), MARK );
-        end
+    % Vectorize the loading of cooling flow properties
+    Wcool(active_cool_flows) = CoolingFlwCharIn(1, active_cool_flows) .* CoolingPlan(1, active_cool_flows);
+    Ttcool_active = CoolingFlwCharIn(3, active_cool_flows);
+    FARcool_active = CoolingFlwCharIn(5, active_cool_flows);
+
+    % H_T must be called in a loop as it is not vectorized
+    active_indices = find(active_cool_flows);
+    for i = 1:length(active_indices)
+        idx = active_indices(i);
+        htcool(idx) = H_T(Ttcool_active(i), FARcool_active(i), MARK);
     end
 end
 
-% -- Initialize cooling flow sum constants --
+% Vectorize the calculation of summed cooling flow properties
+Wcools1 = sum(Wcool .* (1 - CoolingPlan(2, :)));
+Wcoolout = sum(Wcool);
 
-dHcools1 = 0;
-dHcoolout = 0;
-Wcools1 = 0;
-Wcoolout = 0;
-Wfcools1 = 0;
-Wfcoolout = 0;
+% To avoid division by zero, replace FAR values of -1 (or any invalid) with 0 for calculation
+FARcool_safe = FARcool;
+FARcool_safe(FARcool < 0) = 0;
+Wfcools1 = sum(FARcool_safe .* Wcool .* (1 - CoolingPlan(2, :)) ./ (1 + FARcool_safe));
+Wfcoolout = sum(FARcool_safe .* Wcool ./ (1 + FARcool_safe));
 
-% -- Calculate cooling flow constants for stage 1 & output of the turbine --
-
-for i = 1 : num
-    Wcools1 = Wcools1 + Wcool( i ) * ( 1 - CoolingPlan( 2, i ) );
-    Wcoolout = Wcoolout + Wcool( i );
-    Wfcools1 = Wfcools1 + FARcool( i ) * Wcool( i ) * ( 1 - CoolingPlan( 2, i ) ) / ( 1 + FARcool( i ) );
-    Wfcoolout = Wfcoolout + FARcool( i ) * Wcool( i ) / ( 1 + FARcool( i ) );
-end
+% Vectorize the calculation of enthalpy sums
+dHcools1 = sum(htcool .* Wcool .* (1 - CoolingPlan(2, :)));
+dHcoolout = sum(htcool .* Wcool .* CoolingPlan(2, :));
 
 % -- Compute Total Flow --
-
 Ws1in = WIn + Wcools1;
 WOut = WIn + Wcoolout;
 
 % -- Compute Fuel to Air Ratios --
-
-FARs1in = ( FARcIn * WIn / ( 1 + FARcIn ) + Wfcools1 ) / ( WIn / ( 1 + FARcIn ) + Wcools1 - Wfcools1 );
-FARcOut = ( FARcIn * WIn / ( 1 + FARcIn ) + Wfcoolout ) / ( WIn / ( 1 + FARcIn ) + Wcoolout - Wfcoolout );
-
-% -- Compute input enthalpy of cooling flow --
-
-for i = 1 : num
-    dHcools1 = dHcools1 + htcool( i ) * Wcool( i ) * ( 1 - CoolingPlan( 2, i ) );
-    dHcoolout = dHcoolout + htcool( i ) * Wcool( i ) * CoolingPlan( 2, i );
-end
+FARs1in = (FARcIn * WIn / (1 + FARcIn) + Wfcools1) / (WIn / (1 + FARcIn) + Wcools1 - Wfcools1);
+FARcOut = (FARcIn * WIn / (1 + FARcIn) + Wfcoolout) / (WIn / (1 + FARcIn) + Wcoolout - Wfcoolout);
 
 % -- Compute avg enthalpy at stage 1 --
 
@@ -107,12 +95,22 @@ Tts1In = T_H( hts1In, FARs1in, TtIn, MARK );
 psiIn = psi_T( Tts1In, FARs1in, MARK );
 
 % -- Calculate fluid condition related variables --
+persistent STD_CONSTS;
+if isempty(STD_CONSTS)
+    STD_CONSTS = struct();
+end
+if ~isfield(STD_CONSTS, MARK)
+    % Calculate standard day constants once per fuel type and store them
+    STD_CONSTS.(MARK).RSTD = gas_constant(0, MARK);
+    STD_CONSTS.(MARK).CpSTD = Cp_T(TSTD, 0, MARK);
+    STD_CONSTS.(MARK).gammaSTD = STD_CONSTS.(MARK).CpSTD / (STD_CONSTS.(MARK).CpSTD - STD_CONSTS.(MARK).RSTD);
+end
+RSTD = STD_CONSTS.(MARK).RSTD;
+CpSTD = STD_CONSTS.(MARK).CpSTD;
+gammaSTD = STD_CONSTS.(MARK).gammaSTD;
 
-RSTD = gas_constant( 0, MARK );
 RIn = gas_constant( FARcIn, MARK );
-CpSTD = Cp_T( TSTD, 0, MARK );
 CpIn = Cp_T( TtIn, FARcIn, MARK );
-gammaSTD = CpSTD / ( CpSTD - RSTD );
 gammaIn = CpIn / ( CpIn - RIn );
 
 delta = PtIn / PSTD;
@@ -153,8 +151,8 @@ htIdealout = H_T( T_psi( psiOut, FARcOut, Tts1In, MARK ), FARcOut, MARK );
 htOut = ( ( ( htIdealout - hts1In ) * EffMap + hts1In ) * Ws1in + dHcoolout ) / WOut;
 
 % -- Compute Power output only takes into account cooling flow that enters at front of stage 1 --
-
-PwrOut = ( hts1In - htIdealout ) * EffMap * Ws1in * 1e-3;
+WATTS_TO_KW = 1e-3;
+PwrOut = ( hts1In - htIdealout ) * EffMap * Ws1in * WATTS_TO_KW;
 
 % -- Compute Temperature output --
 
@@ -179,15 +177,15 @@ GasPthCharOut( 5 ) = FARcOut;
 
 OthrData = [ WcMap, PRMap, EffMap, NcMap ];
 
-% -- Message ------
+% -- Generate Warning Messages --
+Msg = {}; % Initialize as empty cell array for descriptive warnings
+MAP_EDGE_TOLERANCE = 0.01; % 1% margin for warnings
 
-if ( NcMap_ <= Nc_tab( 1 ) * 1.01 )
-    message = -1;
-elseif ( NcMap_ >= Nc_tab( end ) * 0.99 )
-    message = -2;
-else
-    message = 0;
+% Check corrected speed bounds
+if ( NcMap_ <= Nc_tab(1) * (1 + MAP_EDGE_TOLERANCE) )
+    Msg{end+1} = 'Warning: Corrected speed is near or below the map lower bound.';
+elseif ( NcMap_ >= Nc_tab(end) * (1 - MAP_EDGE_TOLERANCE) )
+    Msg{end+1} = 'Warning: Corrected speed is near or above the map upper bound.';
 end
-Msg = message;
 
 end

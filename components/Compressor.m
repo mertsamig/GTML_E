@@ -40,13 +40,17 @@ htIn = H_T( TtIn );
 psiIn = psi_T( TtIn );
 
 % -- Calculate fluid condition related variables and corected Flow --
+persistent RSTD CpSTD gammaSTD;
+if isempty(RSTD)
+    % Calculate standard day constants once and store them
+    RSTD = gas_constant(0);
+    CpSTD = Cp_T(TSTD);
+    gammaSTD = CpSTD / (CpSTD - RSTD);
+end
 
-RSTD = gas_constant( 0 );
-RIn = gas_constant( 0 );
-CpSTD = Cp_T( TSTD );
-CpIn = Cp_T( TtIn );
-gammaSTD = CpSTD / ( CpSTD - RSTD );
-gammaIn = CpIn / ( CpIn - RIn );
+RIn = gas_constant(0);
+CpIn = Cp_T(TtIn);
+gammaIn = CpIn / (CpIn - RIn);
 
 delta = PtIn / PSTD;
 theta = TtIn / TSTD;
@@ -64,9 +68,13 @@ NcMap_ = NcMap / SF_Nc;
 NcMap_clamped = max(min(NcMap_, Nc_tab(end)), Nc_tab(1));
 beta_clamped = max(min(beta, Beta_tab(end)), Beta_tab(1));
 
+% -- Define constants for clarity --
+PERCENT_TO_FRACTION = 0.01;
+VSV_EFF_PENALTY_FACTOR = 1e-4;
+
 % -- Compute Total Flow input --
 WcMap = interp2(Nc_tab, Beta_tab, Wc_tab, NcMap_clamped, beta_clamped, 'makima');
-WcMap = WcMap + VSV * WcMap * 1e-2;
+WcMap = WcMap + VSV * WcMap * PERCENT_TO_FRACTION;
 WcMap = WcMap * SF_Wc;
 
 % -- Compute Pressure Ratio --
@@ -75,7 +83,7 @@ PRMap = (PRMap - 1) * SF_PR + 1;
 
 % -- Compute Efficiency --
 EffMap = interp2(Nc_tab, Beta_tab, Eff_tab, NcMap_clamped, beta_clamped, 'makima');
-EffMap = EffMap - VSV * VSV * 1e-4 * EffMap;
+EffMap = EffMap - VSV * VSV * VSV_EFF_PENALTY_FACTOR * EffMap;
 EffMap = EffMap * SF_Eff;
 
 % -- Compute pressure output --
@@ -89,52 +97,65 @@ psiOut = psiIn + ( R * log( PRMap ) );
 htOut = htIn + ( H_T( T_psi( psiOut ) ) - htIn ) / EffMap;
 TtOut = T_H( htOut );
 
-% -- Initalize Bleed sums --
+% --- Vectorized Bleed Calculations ---
 
-Wbleeds = 0;
-PwrBld = 0;
+% -- Customer Bleed components --
+[ ~, uWidth1 ] = size(CustBldsPlan);
+WcustOut = zeros(1, uWidth1);
+htcustOut = zeros(1, uWidth1);
+TtcustOut = zeros(1, uWidth1);
+PtcustOut = zeros(1, uWidth1);
+FARcustOut = zeros(1, uWidth1);
 
-% -- Compute customer Bleed components --
+% Use logical indexing for vectorization
+active_cust_bleeds = CustBldsPlan(1, :) > 0;
+if any(active_cust_bleeds)
+    WcustOut(active_cust_bleeds) = CustBldsPlan(1, active_cust_bleeds);
+    FARcustOut(active_cust_bleeds) = FAROut;
+    htcustOut(active_cust_bleeds) = htIn + CustBldsPlan(2, active_cust_bleeds) .* (htOut - htIn);
+    PtcustOut(active_cust_bleeds) = PtIn + CustBldsPlan(3, active_cust_bleeds) .* (PtOut - PtIn);
 
-[ ~, uWidth1 ] = size( CustBldsPlan );
-WcustOut = zeros( 1, uWidth1 );
-htcustOut = zeros( 1, uWidth1 );
-TtcustOut = zeros( 1, uWidth1 );
-PtcustOut = zeros( 1, uWidth1 );
-FARcustOut = zeros( 1, uWidth1 );
-
-for i = 1 : uWidth1
-    if CustBldsPlan( 1, i ) > 0
-        Wbleeds = Wbleeds + CustBldsPlan( 1, i );
-        WcustOut( 1, i ) = CustBldsPlan( 1, i );
-        FARcustOut( 1, i ) = FAROut;
-        htcustOut( 1, i ) = htIn + CustBldsPlan( 2, i ) * ( htOut - htIn );
-        PtcustOut( 1, i ) = PtIn + CustBldsPlan( 3, i ) * ( PtOut - PtIn );
-        TtcustOut( 1, i ) = T_H( htcustOut( 1, i ) );
-        PwrBld = PwrBld + WcustOut( 1, i ) * ( htcustOut( 1, i ) - htOut );
+    % Solver calls cannot be vectorized, so loop over active bleeds only
+    active_indices = find(active_cust_bleeds);
+    for i = 1:length(active_indices)
+        idx = active_indices(i);
+        TtcustOut(idx) = T_H(htcustOut(idx));
     end
+    Pwr_cust_bleeds = sum(WcustOut(active_cust_bleeds) .* (htcustOut(active_cust_bleeds) - htOut));
+else
+    Pwr_cust_bleeds = 0;
 end
 
-% -- Compute fractional Bleed components --
+% -- Fractional Bleed components --
+[ ~, uWidth2 ] = size(FBldsPlan);
+WbldOut = zeros(1, uWidth2);
+htbldOut = zeros(1, uWidth2);
+TtbldOut = zeros(1, uWidth2);
+PtbldOut = zeros(1, uWidth2);
+FARbldOut = zeros(1, uWidth2);
 
-[ ~, uWidth2 ] = size( FBldsPlan );
-WbldOut = zeros( 1, uWidth2 );
-htbldOut = zeros( 1, uWidth2 );
-TtbldOut = zeros( 1, uWidth2 );
-PtbldOut = zeros( 1, uWidth2 );
-FARbldOut = zeros( 1, uWidth2 );
+% Use logical indexing for vectorization
+active_frac_bleeds = FBldsPlan(1, :) > 0;
+if any(active_frac_bleeds)
+    WbldOut(active_frac_bleeds) = WIn * FBldsPlan(1, active_frac_bleeds);
+    FARbldOut(active_frac_bleeds) = FAROut;
+    htbldOut(active_frac_bleeds) = htIn + FBldsPlan(2, active_frac_bleeds) .* (htOut - htIn);
+    PtbldOut(active_frac_bleeds) = PtIn + FBldsPlan(3, active_frac_bleeds) .* (PtOut - PtIn);
 
-for i = 1 : uWidth2
-    if FBldsPlan( 1, i ) > 0
-        WbldOut( 1, i ) = WIn * FBldsPlan( 1, i );
-        Wbleeds = Wbleeds + WbldOut( 1, i );
-        FARbldOut( 1, i ) = FAROut;
-        htbldOut( 1, i ) = htIn + FBldsPlan( 2, i ) * ( htOut - htIn );
-        PtbldOut( 1, i ) = PtIn + FBldsPlan( 3, i ) * ( PtOut - PtIn );
-        TtbldOut( 1, i ) = T_H( htbldOut( 1, i ) );
-        PwrBld = PwrBld + WbldOut( 1, i ) * ( htbldOut( 1, i ) - htOut );
+    % Solver calls cannot be vectorized, so loop over active bleeds only
+    active_indices = find(active_frac_bleeds);
+    for i = 1:length(active_indices)
+        idx = active_indices(i);
+        TtbldOut(idx) = T_H(htbldOut(idx));
     end
+    Pwr_frac_bleeds = sum(WbldOut(active_frac_bleeds) .* (htbldOut(active_frac_bleeds) - htOut));
+else
+    Pwr_frac_bleeds = 0;
 end
+
+% -- Sum bleed effects --
+Wbleeds = sum(WcustOut) + sum(WbldOut);
+PwrBld = Pwr_cust_bleeds + Pwr_frac_bleeds;
 
 % -- Compute Flows --
 
@@ -142,9 +163,9 @@ Wb4bleed = WIn;
 WOut = WIn - Wbleeds;
 
 % -- Compute Powers --
-
+WATTS_TO_KW = 1e-3;
 Pwrb4bleed = Wb4bleed * ( htIn - htOut );
-PwrOut = ( Pwrb4bleed - PwrBld ) * 1e-3;
+PwrOut = ( Pwrb4bleed - PwrBld ) * WATTS_TO_KW;
 
 % -- Compute Normalized Flow Error --
 
@@ -185,22 +206,22 @@ FBldsCharOut( 3, : ) = TtbldOut;
 FBldsCharOut( 4, : ) = PtbldOut;
 FBldsCharOut( 5, : ) = FARbldOut;
 
-if ( NcMap_ <= Nc_tab( 1 ) * 1.01 )
-    message = -1;
-elseif ( NcMap_ >= Nc_tab( end ) * 0.99 )
-    message = -2;
-else
-    message = 0;
-end
-Msg = message;
+% -- Generate Warning Messages --
+Msg = {}; % Initialize as empty cell array for descriptive warnings
+MAP_EDGE_TOLERANCE = 0.01; % 1% margin
 
-if ( beta <= 0.01 )
-    message = -1;
-elseif ( beta >= 0.99 )
-    message = -2;
-else
-    message = 0;
+% Check corrected speed bounds
+if ( NcMap_ <= Nc_tab(1) * (1 + MAP_EDGE_TOLERANCE) )
+    Msg{end+1} = 'Warning: Corrected speed is near or below the map lower bound.';
+elseif ( NcMap_ >= Nc_tab(end) * (1 - MAP_EDGE_TOLERANCE) )
+    Msg{end+1} = 'Warning: Corrected speed is near or above the map upper bound.';
 end
-Msg = Msg * 10 + message;
+
+% Check beta bounds
+if ( beta <= MAP_EDGE_TOLERANCE )
+    Msg{end+1} = 'Warning: Beta is near or below the map lower bound.';
+elseif ( beta >= (1 - MAP_EDGE_TOLERANCE) )
+    Msg{end+1} = 'Warning: Beta is near or above the map upper bound.';
+end
 
 end

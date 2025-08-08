@@ -66,8 +66,11 @@ else
 end
 Eff = Eff * SF_Eff;
 
+% Define a constant for the high FAR value used to get pure fuel enthalpy
+FAR_PURE_FUEL = 1e5;
+
 H_in=H_T(TtIn,f_in,MARK);
-H_in_f=H_T(TtIn_fuel,100000,MARK);%this 100000 should be Inf in theory
+H_in_f=H_T(TtIn_fuel,FAR_PURE_FUEL,MARK); % Use constant for pure fuel enthalpy
 WOut=WIn+Wfin;%Perfect combustion
 Wf_cb = f_in * WIn / ( 1 + f_in );
 f_out = ( Wf_cb + Wfin ) / ( WOut - Wf_cb - Wfin );
