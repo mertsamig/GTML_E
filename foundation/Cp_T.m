@@ -56,11 +56,24 @@ if strcmp(flag, 'Gas')
 else
 
     tz = T / 1000;
-    Xm = FAR/(1 + FAR); 
-    Cp = 0.992313+0.236688*tz-1.852148*tz^2+6.083152*tz^3-8.893933*tz^4+7.097112*tz^5-3.234725*tz^6+0.794571*tz^7-0.081873*tz^8;
+    Xm = FAR/(1 + FAR);
+
+    % Optimized polynomial evaluation for performance
+    % Pre-calculate powers of tz iteratively to avoid expensive power function calls
+    tz2 = tz*tz;
+    tz3 = tz2*tz;
+    tz4 = tz3*tz;
+    tz5 = tz4*tz;
+    tz6 = tz5*tz;
+    tz7 = tz6*tz;
+    tz8 = tz7*tz;
+
+    Cp = 0.992313 + 0.236688*tz - 1.852148*tz2 + 6.083152*tz3 - 8.893933*tz4 + 7.097112*tz5 - 3.234725*tz6 + 0.794571*tz7 - 0.081873*tz8;
 
     if FAR > 1e-5
-        Cp = Cp+Xm*(-0.718874+8.747481*tz-15.863157*tz^2+17.254096*tz^3-10.233795*tz^4+3.081778*tz^5-0.361112*tz^6-0.003919*tz^7);
+        % The second polynomial for fuel contribution
+        Cp_fuel = -0.718874 + 8.747481*tz - 15.863157*tz2 + 17.254096*tz3 - 10.233795*tz4 + 3.081778*tz5 - 0.361112*tz6 - 0.003919*tz7;
+        Cp = Cp + Xm * Cp_fuel;
     end
 end
 

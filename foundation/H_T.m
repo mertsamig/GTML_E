@@ -56,11 +56,25 @@ if strcmp(flag, 'Gas')
 else
 
     tz = T / 1000;
-    Xm = FAR/(1 + FAR); 
-    H = 0.992313*tz+0.236688*tz^2/2-1.852148*tz^3/3+6.083152*tz^4/4-8.893933*tz^5/5+7.097112*tz^6/6-3.234725*tz^7/7+0.794571*tz^8/8-0.081873*tz^9/9+0.422178;
+    Xm = FAR/(1 + FAR);
+
+    % Optimized polynomial evaluation for performance
+    % Pre-calculate powers of tz iteratively to avoid expensive power function calls
+    tz2 = tz*tz;
+    tz3 = tz2*tz;
+    tz4 = tz3*tz;
+    tz5 = tz4*tz;
+    tz6 = tz5*tz;
+    tz7 = tz6*tz;
+    tz8 = tz7*tz;
+    tz9 = tz8*tz;
+
+    H = 0.992313*tz + 0.236688*tz2/2 - 1.852148*tz3/3 + 6.083152*tz4/4 - 8.893933*tz5/5 + 7.097112*tz6/6 - 3.234725*tz7/7 + 0.794571*tz8/8 - 0.081873*tz9/9 + 0.422178;
  
     if FAR > 1e-5
-        H = H+Xm*(-0.718874*tz+8.747481*tz^2/2-15.863157*tz^3/3+17.254096*tz^4/4-10.233795*tz^5/5+3.081778*tz^6/6-0.361112*tz^7/7+0.0555930);
+        % The second polynomial for fuel contribution
+        H_fuel = -0.718874*tz + 8.747481*tz2/2 - 15.863157*tz3/3 + 17.254096*tz4/4 - 10.233795*tz5/5 + 3.081778*tz6/6 - 0.361112*tz7/7 + 0.0555930;
+        H = H + Xm * H_fuel;
     end
 end
 

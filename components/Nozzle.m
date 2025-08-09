@@ -59,29 +59,37 @@ if ( choked == 0 )
         PRlambdath = 0.01;
         Msg = -2;
     end
-	lambdath = sqrt( ( ( gammath + 1 ) / ( gammath - 1 ) ) * ( 1 - ( PRlambdath ^ ( ( gammath - 1 ) / gammath ) ) ) );
-	qlambdath = ( ( gammath + 1 ) / 2 ) ^ ( 1 / ( gammath - 1 ) ) * lambdath;
-	qlambdath = qlambdath * ( ( 1 - ( gammath - 1 ) / ( gammath + 1 ) * lambdath * lambdath ) ^ ( 1 / ( gammath - 1 ) ) );
 else
 % -- Assuming choked, determine static pressure and tempurature --
 	Psth = PsMN1;
-	lambdath = 1;
-	qlambdath = 1;
 end
 
-% -- Calculate Flow out of nozzle --
+% -- Calculate velocity & gross thrust --
+% Using the standard isentropic flow equation for exit velocity.
+V = CV * sqrt(max(0, 2 * Cpth * TtIn * (1 - (Psth / PtIn)^((gammath-1)/gammath))));
+FgOut = ( WOut * V + ( Psth - PambIn ) * AthroatIn * 1e+3 ) * CX;
+
+% -- Calculate Flow out of nozzle for error checking --
+% This section calculates the theoretical mass flow ('Woutcalc') that the
+% nozzle can pass for the given conditions. This is compared against the
+% incoming flow 'WIn' to generate a normalized error for the solver.
 
 WOut = WIn;
-Kq = sqrt( ( 2 / ( gammath + 1 ) ) ^ ( ( gammath + 1 ) / ( gammath - 1 ) ) * ( gammath / Rth ) );
-Woutcalc = Kq * PtIn * Cdth * AthroatIn * qlambdath * CV / sqrt( TtIn ) * 1e+3;
- 
-% -- Calculate velocity & gross thrust --
 
-V = lambdath * CV * sqrt( ( 2 * gammath / ( gammath + 1 ) ) * Rth * TtIn );
-FgOut = ( WOut * V + ( Psth - PambIn ) * AthroatIn * 1e+3 ) * CX;
+% Calculate throat Mach number from the pressure ratio PtIn/Psth
+M_th_sq = (2 / (gammath - 1)) * ((PtIn / Psth)^((gammath - 1) / gammath) - 1);
+M_th = sqrt(max(0, M_th_sq));
+
+% Calculate the non-dimensional flow function q(M)
+% q(M) = M * (1 + (gamma-1)/2 * M^2)^(-(gamma+1)/(2*(gamma-1)))
+% We apply the discharge coefficient Cdth to the final mass flow calculation.
+q_M = M_th * (1 + (gammath - 1) / 2 * M_th_sq)^(-(gammath + 1) / (2 * (gammath - 1)));
+
+% Calculate the theoretical mass flow rate using the gas dynamics flow function.
+% The 1e3 factor is for unit consistency, originally present in the code.
+Woutcalc = (AthroatIn * PtIn / sqrt(TtIn)) * sqrt(gammath/Rth) * q_M * Cdth * 1e3;
  
 % -- Compute Normalized Flow Error --
-
 if ( WIn == 0 )
 	NErrorOut = 100;
 else 
@@ -89,7 +97,6 @@ else
 end
 
 % -- Assign output values --
-
 OthrData = [Woutcalc];
     
 end
