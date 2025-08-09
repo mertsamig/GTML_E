@@ -115,12 +115,9 @@ if any(active_cust_bleeds)
     htcustOut(active_cust_bleeds) = htIn + CustBldsPlan(2, active_cust_bleeds) .* (htOut - htIn);
     PtcustOut(active_cust_bleeds) = PtIn + CustBldsPlan(3, active_cust_bleeds) .* (PtOut - PtIn);
 
-    % Solver calls cannot be vectorized, so loop over active bleeds only
-    active_indices = find(active_cust_bleeds);
-    for i = 1:length(active_indices)
-        idx = active_indices(i);
-        TtcustOut(idx) = T_H(htcustOut(idx));
-    end
+    % With the vectorized T_H solver, we can calculate all bleed temperatures in a single call.
+    TtcustOut(active_cust_bleeds) = T_H(htcustOut(active_cust_bleeds), FAROut, TtOut);
+
     Pwr_cust_bleeds = sum(WcustOut(active_cust_bleeds) .* (htcustOut(active_cust_bleeds) - htOut));
 else
     Pwr_cust_bleeds = 0;
@@ -142,12 +139,9 @@ if any(active_frac_bleeds)
     htbldOut(active_frac_bleeds) = htIn + FBldsPlan(2, active_frac_bleeds) .* (htOut - htIn);
     PtbldOut(active_frac_bleeds) = PtIn + FBldsPlan(3, active_frac_bleeds) .* (PtOut - PtIn);
 
-    % Solver calls cannot be vectorized, so loop over active bleeds only
-    active_indices = find(active_frac_bleeds);
-    for i = 1:length(active_indices)
-        idx = active_indices(i);
-        TtbldOut(idx) = T_H(htbldOut(idx));
-    end
+    % With the vectorized T_H solver, we can calculate all bleed temperatures in a single call.
+    TtbldOut(active_frac_bleeds) = T_H(htbldOut(active_frac_bleeds), FAROut, TtOut);
+
     Pwr_frac_bleeds = sum(WbldOut(active_frac_bleeds) .* (htbldOut(active_frac_bleeds) - htOut));
 else
     Pwr_frac_bleeds = 0;

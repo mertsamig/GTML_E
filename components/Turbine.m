@@ -51,12 +51,8 @@ if (port_num == 5)
     Ttcool_active = CoolingFlwCharIn(3, active_cool_flows);
     FARcool_active = CoolingFlwCharIn(5, active_cool_flows);
 
-    % H_T must be called in a loop as it is not vectorized
-    active_indices = find(active_cool_flows);
-    for i = 1:length(active_indices)
-        idx = active_indices(i);
-        htcool(idx) = H_T(Ttcool_active(i), FARcool_active(i), MARK);
-    end
+    % H_T is vectorized for 'Oil' fuel type, allowing for a single efficient call.
+    htcool(active_cool_flows) = H_T(Ttcool_active, FARcool_active, MARK);
 end
 
 % Vectorize the calculation of summed cooling flow properties
